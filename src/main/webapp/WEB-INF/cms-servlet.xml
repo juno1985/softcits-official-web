@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:spring-dwr="http://www.directwebremoting.org/schema/spring-dwr"
+	xsi:schemaLocation="http://www.directwebremoting.org/schema/spring-dwr http://www.directwebremoting.org/schema/spring-dwr/spring-dwr-3.0.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.1.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd">
+	
+	<!-- <context:component-scan base-package="cn.cs.demo.controller"/> -->
+	
+	<!-- <context:component-scan base-package="cn.cs.demo" use-default-filters="false">
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+		<context:include-filter type="annotation"
+			expression="org.springframework.web.bind.annotation.ControllerAdvice" />
+	</context:component-scan> -->
+	
+	<context:component-scan base-package="org.softcits.web.controller, org.juno.test.controller" use-default-filters="false">
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+		<context:include-filter type="annotation"
+			expression="org.springframework.web.bind.annotation.ControllerAdvice" />
+	</context:component-scan>
+	
+	<spring-dwr:controller id="dwrController" debug="false"/>
+	<spring-dwr:annotation-config id="dwrAnnotationConfig" />
+  	<spring-dwr:annotation-scan base-package="org.softcits.web.dwr" scanDataTransferObject="true"/>
+  	
+  	<bean class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+	  <property value="true" name="alwaysUseFullPath"></property> 
+	  <property name="mappings">
+	    <props> 
+	      <prop key="/dwr/**/*">dwrController</prop>
+	    </props>
+	 </property> 
+	</bean>
+	
+	<!-- <bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		<property name="defaultErrorView" value="msg/defaultError"></property>
+		<property name="exceptionAttribute" value="exception"></property>
+		<property name="exceptionMappings">
+			<props>
+				<prop key="cn.cs.demo.common.exception.ITSalonException">msg/common_error</prop>
+			</props>
+		</property>
+	</bean> -->
+	
+	<!-- 将静态文件指定到某个特殊的文件夹中统一处理 -->
+	<mvc:resources location="/resources/" mapping="/resources/**"/>
+	
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+		<property name="prefix" value="/WEB-INF/jsp/"/>
+		<property name="suffix" value=".jsp"/>
+		<!-- InternalResourceViewResolver必须总是赋予最低的优先级（最大的order值），
+		因为不管返回什么视图名称，它都将解析视图。如果它的优先级高于其它解析器的优先级的话，它将使得其它具有较低优先级的解析器没有机会解析视图。 -->
+		<property name="order" value="1"></property>
+	</bean>
+  
+	<bean id="stringHttpMessageConverter" class="org.springframework.http.converter.StringHttpMessageConverter">
+		<property name="supportedMediaTypes">
+			<list>
+				<bean class="org.springframework.http.MediaType">
+					<constructor-arg value="text"/>
+					<constructor-arg value="plain"/>
+					<constructor-arg value="UTF-8"/>
+				</bean>
+			</list>
+		</property>
+	</bean>
+	
+	<!-- 设置multipartResolver才能完成文件上传 -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="maxUploadSize" value="50000000"></property>
+		<property name="maxInMemorySize"  value="5000000"></property>
+		<property name="defaultEncoding" value="UTF-8"></property>
+		<property name="maxUploadSizePerFile"  value="50000000"></property>
+	</bean>
+	
+	<bean id="localeResolver" class="org.springframework.web.servlet.i18n.SessionLocaleResolver"></bean>
+	
+	<mvc:interceptors>	
+		<bean class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor"></bean>	
+		<!-- 对进入/cms/admin下的controller mapping进行过滤 -->	
+		<mvc:interceptor>
+			<mvc:mapping path="/admin/**"/>
+			<bean class="org.softcits.web.interceptor.AuthInterceptor"/>
+		</mvc:interceptor>
+	</mvc:interceptors>
+	<mvc:annotation-driven/>
+</beans>
